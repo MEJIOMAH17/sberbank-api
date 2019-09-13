@@ -1,9 +1,6 @@
 package ru.mekosichkin.sberbank.api
 
 import org.junit.Test
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
 
 
 internal class SberbankTest {
@@ -24,12 +21,23 @@ internal class SberbankTest {
 
     @Test
     fun createPin(){
-        val register = sberbank.register()
+        val mGuid = sberbank.register()
         println("smsPassword:")
         val sms = readLine()!!
-        val confirm = sberbank.confirm(register, sms)
-        val loginData = sberbank.createPin(register)
+        val confirm = sberbank.confirm(mGuid, sms)
+        val loginData = sberbank.createPin(mGuid)
+        print(mGuid)
         print(loginData)
+    }
+    @Test
+    fun init(){
+        val mGuid = sberbank.register()
+        println("smsPassword:")
+        val sms = readLine()!!
+        val confirm = sberbank.confirm(mGuid, sms)
+        val loginData = sberbank.createPin(mGuid)
+        val init = sberbank.init(mGuid, loginData)
+        assert(init.value.isNotEmpty())
     }
 
     @Test
@@ -50,8 +58,11 @@ internal class SberbankTest {
             assert(token=="a791e6007a2a5506cd495e947829b7fa")
             assert(externalToken=="060d0500060406535752545a02015a5155030702050300005606520601030453")
         }
-
-
+    }
+    @Test
+    fun parseInitRs(){
+        val vuid=sberbank.parseInit(initRs)
+        assert(vuid.value=="e01784b28c09f96c525d0df35c172e4c")
     }
 
 
@@ -95,6 +106,12 @@ internal class SberbankTest {
 		<token>a791e6007a2a5506cd495e947829b7fa</token> 
 		<externalToken>060d0500060406535752545a02015a5155030702050300005606520601030453</externalToken> 
 	</loginData> 
+</response>"""
+    val initRs="""<response> 
+	<status> 
+		<code>0</code> 
+	</status> 
+	<VUID>e01784b28c09f96c525d0df35c172e4c</VUID> 
 </response>"""
 
 

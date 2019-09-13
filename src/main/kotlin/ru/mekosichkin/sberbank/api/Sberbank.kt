@@ -6,6 +6,8 @@ import io.github.rybalkinsd.kohttp.dsl.httpPost
 import io.github.rybalkinsd.kohttp.ext.url
 import org.xml.sax.InputSource
 import java.io.StringReader
+import java.util.*
+import java.util.stream.Collectors
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathFactory
 
@@ -92,7 +94,42 @@ class Sberbank {
         val rs = httpPost.body()!!.string()
         return parseCreatePinRs(rs)
     }
+    fun init(mGuid: MGuid,loginData: LoginData): VUid {
+        val httpPost = httpPost {
+            scheme = "https"
+            host = "online.sberbank.ru"
+            port = 4477
+            path = "/CSAMAPI/safeConfirm.do"
+            body {
+                form {
+                    "operation" to "init"
+                    "mGUID" to mGuid.value
+                    "version" to "9.20"
+                    "externalToken" to loginData.externalToken
+                    "client_secret" to generateSecret()
+                    "appType" to "ANE-LX1"
+                }
+            }
+        }
+        val rs = httpPost.body()!!.string()
+        return parseInit(rs)
+    }
 
+    private fun generateSecret(): String {
+        val magic = """MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAbXpvs01mentr7E18klXI2mGqkGwO+ew9
+                Xnj8SDsssPfzRxr1YCBdFjf7Zmspcq3/H/x/1xHPIYkiHveZZ3HzkwrAMgx06+Nld6tFN1FJYui9
+                ZKnhk4iB1FItuREiY6A0j4XFf85q+JG+GDdKjDx9LbrafPLGJX73eHAfVjudZTuFLS10jNiFtQJg
+                ywe19v7KwVN7WLQNDuYo8LQLnmcdnSJhVPr/herRuTXwyyUim82dSNfSekZsLat0iHny7I7Er/Uq
+                EX/AaiM+X2ilP9LgHXlsYUK26zjfvO6uLa0dAs8H/DlVx/npotByNzjhtOXUkcEdy2i9glPSjnvC
+                dsyWtQIDAQBC"""
+        return magic
+    }
+
+
+
+    internal fun parseInit(rs:String):VUid{
+        return VUid(findByXpath("response/VUID",rs))
+    }
 
     internal fun parseRegisterResponse(response: String): MGuid {
 
@@ -125,4 +162,5 @@ class Sberbank {
 
     data class MGuid(val value: String)
     data class LoginData(val host:String, val token:String,val externalToken:String)
+    data class VUid(val value:String)
 }
