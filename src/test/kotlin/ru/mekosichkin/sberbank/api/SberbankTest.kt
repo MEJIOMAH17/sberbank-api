@@ -5,14 +5,15 @@ import org.junit.Test
 
 internal class SberbankTest {
     val sberbank = Sberbank()
+    val login="mejiomah17"
     @Test
     fun register() {
-        val register = sberbank.register()
+        val register = sberbank.register(login)
         assert( register.value.isNotEmpty())
     }
     @Test
     fun confirm(){
-        val register = sberbank.register()
+        val register = sberbank.register(login)
         println("smsPassword:")
         val sms = readLine()!!
         val confirm = sberbank.confirm(register, sms)
@@ -21,7 +22,7 @@ internal class SberbankTest {
 
     @Test
     fun createPin(){
-        val mGuid = sberbank.register()
+        val mGuid = sberbank.register(login)
         println("smsPassword:")
         val sms = readLine()!!
         val confirm = sberbank.confirm(mGuid, sms)
@@ -31,7 +32,7 @@ internal class SberbankTest {
     }
     @Test
     fun init(){
-        val mGuid = sberbank.register()
+        val mGuid = sberbank.register(login)
         println("smsPassword:")
         val sms = readLine()!!
         val confirm = sberbank.confirm(mGuid, sms)

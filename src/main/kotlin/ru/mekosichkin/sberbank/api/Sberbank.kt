@@ -14,7 +14,7 @@ import javax.xml.xpath.XPathFactory
 class Sberbank {
     private val xpFactory = XPathFactory.newInstance()
 
-    fun register(): MGuid {
+    fun register(login:String): MGuid {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
@@ -24,7 +24,7 @@ class Sberbank {
             body {
                 form {
                     "operation" to "register"
-                    "login" to "mejiomah17"
+                    "login" to login
                     "version" to "9.20"
                     "appType" to "android"
                     "appVersion" to "10.2.0"
@@ -115,6 +115,7 @@ class Sberbank {
         return parseInit(rs)
     }
 
+
     private fun generateSecret(): String {
         val magic = """MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAbXpvs01mentr7E18klXI2mGqkGwO+ew9
                 Xnj8SDsssPfzRxr1YCBdFjf7Zmspcq3/H/x/1xHPIYkiHveZZ3HzkwrAMgx06+Nld6tFN1FJYui9
@@ -124,8 +125,6 @@ class Sberbank {
                 dsyWtQIDAQBC"""
         return magic
     }
-
-
 
     internal fun parseInit(rs:String):VUid{
         return VUid(findByXpath("response/VUID",rs))
