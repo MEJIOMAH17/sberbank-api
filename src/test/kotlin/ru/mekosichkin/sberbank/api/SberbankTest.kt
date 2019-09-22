@@ -1,9 +1,6 @@
 package ru.mekosichkin.sberbank.api
 
 import org.junit.Test
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
 
 
 internal class SberbankTest {
@@ -27,10 +24,22 @@ internal class SberbankTest {
         val register = sberbank.register()
         println("smsPassword:")
         val sms = readLine()!!
-        val confirm = sberbank.confirm(register, sms)
+        sberbank.confirm(register, sms)
         val loginData = sberbank.createPin(register)
         print(loginData)
     }
+    @Test
+    fun login(){
+        val register = sberbank.register()
+        println("smsPassword:")
+        val sms = readLine()!!
+        sberbank.confirm(register, sms)
+        val loginData = sberbank.createPin(register)
+        val postCSALogin = sberbank.postCSALogin(loginData)
+        print(postCSALogin)
+    }
+
+
 
     @Test
     fun parseRegisterResponse(){
@@ -44,14 +53,12 @@ internal class SberbankTest {
 
     @Test
     fun parseCreatePinRs(){
-        val loginData=sberbank.parseCreatePinRs(createPinRs)
+        val loginData=sberbank.parseLoginData(createPinRs)
         loginData.run {
             assert(host=="node2.online.sberbank.ru")
             assert(token=="a791e6007a2a5506cd495e947829b7fa")
             assert(externalToken=="060d0500060406535752545a02015a5155030702050300005606520601030453")
         }
-
-
     }
 
 
