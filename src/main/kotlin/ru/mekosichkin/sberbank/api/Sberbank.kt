@@ -1,14 +1,17 @@
 package ru.mekosichkin.sberbank.api
 
+import io.github.rybalkinsd.kohttp.dsl.context.HttpPostContext
 import io.github.rybalkinsd.kohttp.dsl.httpPost
 import org.xml.sax.InputSource
 import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathFactory
 
+
 class Sberbank {
     private val xpFactory = XPathFactory.newInstance()
     private val jsessionid = "0000uHrFvcD0Xv3qIYW5bXDS_Jy:1akk7tu3m|rsDPJSESSIONID=PBC5YS:-152294547"
+    private var secondJsessionid = ""
 
     private val swJsessionId = "8f0961c07d8ff7ca1a881002df39ec2f"
 
@@ -34,6 +37,7 @@ class Sberbank {
                     "deviceName" to "HUAWEI_ANE-LX1"
                     "devID" to "607d725604d1f032e50bb3c0622e791d3f400000"
                     "devIDOld" to "63c103d506178038cb0964403f372ae5af1e0000"
+
                     "mobileSdkData" to "{\"TIMESTAMP\":\"2019-09-13T07:23:14Z\",\"HardwareID\":\"-1\",\"SIM_ID\":\"-1\",\"PhoneNumber\":\"-1\",\"GeoLocationInfo\":[{\"Timestamp\":\"0\",\"Status\":\"1\"}],\"DeviceModel\":\"ANE-LX1\",\"MultitaskingSupported\":true,\"DeviceName\":\"marky\",\"DeviceSystemName\":\"Android\",\"DeviceSystemVersion\":\"28\",\"Languages\":\"ru\",\"WiFiMacAddress\":\"02:00:00:00:00:00\",\"WiFiNetworksData\":{\"BBSID\":\"02:00:00:00:00:00\",\"SignalStrength\":\"-47\",\"Channel\":\"null\"},\"CellTowerId\":\"-1\",\"LocationAreaCode\":\"-1\",\"ScreenSize\":\"1080x2060\",\"RSA_ApplicationKey\":\"2C501591EA5BF79F1C0ABA8B628C2571\",\"MCC\":\"286\",\"MNC\":\"02\",\"OS_ID\":\"1f32651b72df5515\",\"SDK_VERSION\":\"3.10.0\",\"Compromised\":0,\"Emulator\":0}"
                     "mobileSDKKAV" to "{\"osVersion\":0,\"KavSdkId\":\"\",\"KavSdkVersion\":\"\",\"KavSdkVirusDBVersion\":\"SdkVirusDbInfo(year=0, month=0, day=0, hour=0, minute=0, second=0, knownThreatsCount=0, records=0, size=0)\",\"KavSdkVirusDBStatus\":\"\",\"KavSdkVirusDBStatusDate\":\"\",\"KavSdkRoot\":false,\"LowPasswordQuality\":false,\"NonMarketAppsAllowed\":false,\"UsbDebugOn\":false,\"ScanStatus\":\"NONE\"}"
                 }
@@ -169,8 +173,38 @@ class Sberbank {
                 }
             }
         }
+        val headers = httpPost.headers()
+        secondJsessionid = headers["Set-Cookie"]!!.split(";")
+                .filter { it.startsWith("JSESSIONID") }
+                .single()
+                .drop ( "JSESSIONID=".length )
+
         val rs = httpPost.body()!!.string()
         return rs
+    }
+
+    fun extendedPermissions(): String {
+
+        var reuse: HttpPostContext = HttpPostContext()
+        val httpPost = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/products/list.do"
+            header {
+                cookie {
+                    "JSESSIONID" to secondJsessionid
+                }
+                "Cookie" to "JSESSIONID=$jsessionid"
+                "User-Agent" to "Mobile Device"
+                "Accept-Encoding" to "gzip"
+                "Content-Type" to "application/x-www-form-urlencoded"
+                "Host" to "node2.online.sberbank.ru:4477"
+                "Connection" to "Keep-Alive"
+            }
+
+        }
+        return httpPost.body()!!.string()
     }
 
 

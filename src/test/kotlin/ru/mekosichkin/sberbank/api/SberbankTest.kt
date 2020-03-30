@@ -38,6 +38,18 @@ internal class SberbankTest {
         val postCSALogin = sberbank.postCSALogin(loginData)
         print(postCSALogin)
     }
+    @Test
+    fun products(){
+        val register = sberbank.register()
+        println("smsPassword:")
+        val sms = readLine()!!
+        sberbank.confirm(register, sms)
+        val loginData = sberbank.createPin(register)
+        val postCSALogin = sberbank.postCSALogin(loginData)
+        print(postCSALogin)
+        val getProducts=sberbank.extendedPermissions()
+        print(getProducts)
+    }
 
 
 
