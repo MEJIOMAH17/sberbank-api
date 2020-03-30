@@ -1,6 +1,5 @@
 package ru.mekosichkin.sberbank.api
 
-import io.github.rybalkinsd.kohttp.dsl.context.HttpPostContext
 import io.github.rybalkinsd.kohttp.dsl.httpPost
 import org.xml.sax.InputSource
 import java.io.StringReader
@@ -15,7 +14,7 @@ class Sberbank {
 
     private val swJsessionId = "8f0961c07d8ff7ca1a881002df39ec2f"
 
-    fun register(): MGuid {
+    fun register(login: String): MGuid {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
@@ -30,7 +29,7 @@ class Sberbank {
             body {
                 form {
                     "operation" to "register"
-                    "login" to "mejiomah17"
+                    "login" to login
                     "version" to "9.20"
                     "appType" to "android"
                     "appVersion" to "10.2.0"
@@ -146,7 +145,10 @@ class Sberbank {
         return parseLoginData(rs)
     }
 
-    fun postCSALogin(loginData: LoginData): String {
+    /**
+     * This method must be invoked after login for updating jsessionId
+     */
+    fun postCSALogin(loginData: LoginData) {
         val httpPost = httpPost {
             scheme = "https"
             host = "node2.online.sberbank.ru"
@@ -177,15 +179,12 @@ class Sberbank {
         secondJsessionid = headers["Set-Cookie"]!!.split(";")
                 .filter { it.startsWith("JSESSIONID") }
                 .single()
-                .drop ( "JSESSIONID=".length )
+                .drop("JSESSIONID=".length)
 
-        val rs = httpPost.body()!!.string()
-        return rs
     }
 
-    fun extendedPermissions(): String {
+    fun productList(): String {
 
-        var reuse: HttpPostContext = HttpPostContext()
         val httpPost = httpPost {
             scheme = "https"
             host = "node2.online.sberbank.ru"
@@ -201,6 +200,11 @@ class Sberbank {
                 "Content-Type" to "application/x-www-form-urlencoded"
                 "Host" to "node2.online.sberbank.ru:4477"
                 "Connection" to "Keep-Alive"
+            }
+            body {
+                form {
+                    "showProductType" to "cards,accounts,imaccounts,loans"
+                }
             }
 
         }
