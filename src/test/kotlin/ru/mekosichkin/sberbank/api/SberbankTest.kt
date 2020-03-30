@@ -5,15 +5,14 @@ import org.junit.Test
 
 internal class SberbankTest {
     val sberbank = Sberbank()
-    val login="mejiomah17"
     @Test
     fun register() {
-        val register = sberbank.register(login)
+        val register = sberbank.register()
         assert( register.value.isNotEmpty())
     }
     @Test
     fun confirm(){
-        val register = sberbank.register(login)
+        val register = sberbank.register()
         println("smsPassword:")
         val sms = readLine()!!
         val confirm = sberbank.confirm(register, sms)
@@ -22,24 +21,25 @@ internal class SberbankTest {
 
     @Test
     fun createPin(){
-        val mGuid = sberbank.register(login)
+        val register = sberbank.register()
         println("smsPassword:")
         val sms = readLine()!!
-        val confirm = sberbank.confirm(mGuid, sms)
-        val loginData = sberbank.createPin(mGuid)
-        print(mGuid)
+        sberbank.confirm(register, sms)
+        val loginData = sberbank.createPin(register)
         print(loginData)
     }
     @Test
-    fun init(){
-        val mGuid = sberbank.register(login)
+    fun login(){
+        val register = sberbank.register()
         println("smsPassword:")
         val sms = readLine()!!
-        val confirm = sberbank.confirm(mGuid, sms)
-        val loginData = sberbank.createPin(mGuid)
-        val init = sberbank.init(mGuid, loginData)
-        assert(init.value.isNotEmpty())
+        sberbank.confirm(register, sms)
+        val loginData = sberbank.createPin(register)
+        val postCSALogin = sberbank.postCSALogin(loginData)
+        print(postCSALogin)
     }
+
+
 
     @Test
     fun parseRegisterResponse(){
@@ -53,17 +53,12 @@ internal class SberbankTest {
 
     @Test
     fun parseCreatePinRs(){
-        val loginData=sberbank.parseCreatePinRs(createPinRs)
+        val loginData=sberbank.parseLoginData(createPinRs)
         loginData.run {
             assert(host=="node2.online.sberbank.ru")
             assert(token=="a791e6007a2a5506cd495e947829b7fa")
             assert(externalToken=="060d0500060406535752545a02015a5155030702050300005606520601030453")
         }
-    }
-    @Test
-    fun parseInitRs(){
-        val vuid=sberbank.parseInit(initRs)
-        assert(vuid.value=="e01784b28c09f96c525d0df35c172e4c")
     }
 
 
@@ -107,12 +102,6 @@ internal class SberbankTest {
 		<token>a791e6007a2a5506cd495e947829b7fa</token> 
 		<externalToken>060d0500060406535752545a02015a5155030702050300005606520601030453</externalToken> 
 	</loginData> 
-</response>"""
-    val initRs="""<response> 
-	<status> 
-		<code>0</code> 
-	</status> 
-	<VUID>e01784b28c09f96c525d0df35c172e4c</VUID> 
 </response>"""
 
 

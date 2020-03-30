@@ -1,30 +1,33 @@
 package ru.mekosichkin.sberbank.api
 
-import io.github.rybalkinsd.kohttp.dsl.async.httpPostAsync
-import io.github.rybalkinsd.kohttp.dsl.httpGet
 import io.github.rybalkinsd.kohttp.dsl.httpPost
-import io.github.rybalkinsd.kohttp.ext.url
 import org.xml.sax.InputSource
 import java.io.StringReader
-import java.util.*
-import java.util.stream.Collectors
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathFactory
 
 class Sberbank {
     private val xpFactory = XPathFactory.newInstance()
+    private val jsessionid = "0000uHrFvcD0Xv3qIYW5bXDS_Jy:1akk7tu3m|rsDPJSESSIONID=PBC5YS:-152294547"
 
-    fun register(login:String): MGuid {
+    private val swJsessionId = "8f0961c07d8ff7ca1a881002df39ec2f"
+
+    fun register(): MGuid {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
             port = 4477
             path = "/CSAMAPI/registerApp.do"
-
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                    "SWJSESSIONID" to swJsessionId
+                }
+            }
             body {
                 form {
                     "operation" to "register"
-                    "login" to login
+                    "login" to "mejiomah17"
                     "version" to "9.20"
                     "appType" to "android"
                     "appVersion" to "10.2.0"
@@ -46,7 +49,12 @@ class Sberbank {
             host = "online.sberbank.ru"
             port = 4477
             path = "/CSAMAPI/registerApp.do"
-
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                    "SWJSESSIONID" to swJsessionId
+                }
+            }
             body {
                 form {
                     "operation" to "confirm"
@@ -57,7 +65,7 @@ class Sberbank {
                     "mobileSdkData" to "{\"TIMESTAMP\":\"2019-09-13T07:23:14Z\",\"HardwareID\":\"-1\",\"SIM_ID\":\"-1\",\"PhoneNumber\":\"-1\",\"GeoLocationInfo\":[{\"Timestamp\":\"0\",\"Status\":\"1\"}],\"DeviceModel\":\"ANE-LX1\",\"MultitaskingSupported\":true,\"DeviceName\":\"marky\",\"DeviceSystemName\":\"Android\",\"DeviceSystemVersion\":\"28\",\"Languages\":\"ru\",\"WiFiMacAddress\":\"02:00:00:00:00:00\",\"WiFiNetworksData\":{\"BBSID\":\"02:00:00:00:00:00\",\"SignalStrength\":\"-47\",\"Channel\":\"null\"},\"CellTowerId\":\"-1\",\"LocationAreaCode\":\"-1\",\"ScreenSize\":\"1080x2060\",\"RSA_ApplicationKey\":\"2C501591EA5BF79F1C0ABA8B628C2571\",\"MCC\":\"286\",\"MNC\":\"02\",\"OS_ID\":\"1f32651b72df5515\",\"SDK_VERSION\":\"3.10.0\",\"Compromised\":0,\"Emulator\":0}"
                     "mobileSDKKAV" to "{\"osVersion\":0,\"KavSdkId\":\"\",\"KavSdkVersion\":\"\",\"KavSdkVirusDBVersion\":\"SdkVirusDbInfo(year=0, month=0, day=0, hour=0, minute=0, second=0, knownThreatsCount=0, records=0, size=0)\",\"KavSdkVirusDBStatus\":\"\",\"KavSdkVirusDBStatusDate\":\"\",\"KavSdkRoot\":false,\"LowPasswordQuality\":false,\"NonMarketAppsAllowed\":false,\"UsbDebugOn\":false,\"ScanStatus\":\"NONE\"}"
                     "confirmData" to smsPassword
-                    "confirmOperation" to	"confirmSMS"
+                    "confirmOperation" to "confirmSMS"
                 }
             }
         }
@@ -68,18 +76,23 @@ class Sberbank {
     /**
      * password - 5 numbers
      */
-    fun createPin(mGuid: MGuid,password:String="84523"):LoginData{
+    fun createPin(mGuid: MGuid, password: String = "84523"): LoginData {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
             port = 4477
             path = "/CSAMAPI/registerApp.do"
-
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                    "SWJSESSIONID" to swJsessionId
+                }
+            }
             body {
                 form {
                     "operation" to "createPIN"
                     "mGUID" to mGuid.value
-                    "password" to  password
+                    "password" to password
                     "version" to "9.20"
                     "appType" to "android"
                     "appVersion" to "10.2.0"
@@ -92,55 +105,88 @@ class Sberbank {
             }
         }
         val rs = httpPost.body()!!.string()
-        return parseCreatePinRs(rs)
+        return parseLoginData(rs)
     }
-    fun init(mGuid: MGuid,loginData: LoginData): VUid {
+
+    fun login(mGuid: MGuid): LoginData {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
             port = 4477
-            path = "/CSAMAPI/safeConfirm.do"
+            path = "/CSAMAPI/login.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                    "SWJSESSIONID" to swJsessionId
+                }
+            }
             body {
                 form {
-                    "operation" to "init"
-                    "mGUID" to mGuid.value
+                    "operation" to "button.login"
+                    "password" to "84523"
                     "version" to "9.20"
-                    "externalToken" to loginData.externalToken
-                    "client_secret" to generateSecret()
-                    "appType" to "ANE-LX1"
+                    "appType" to "android"
+                    "appVersion" to "10.2.0"
+                    "osVersion" to "28.0"
+                    "deviceName" to "HUAWEI_ANE-LX1"
+                    "isLightScheme" to false
+                    "isSafe" to "true"
+                    "mGUID" to mGuid.value
+                    "devID" to "607d725604d1f032e50bb3c0622e791d3f400000"
+                    "mobileSdkData" to "{\"TIMESTAMP\":\"2019-09-13T07:23:14Z\",\"HardwareID\":\"-1\",\"SIM_ID\":\"-1\",\"PhoneNumber\":\"-1\",\"GeoLocationInfo\":[{\"Timestamp\":\"0\",\"Status\":\"1\"}],\"DeviceModel\":\"ANE-LX1\",\"MultitaskingSupported\":true,\"DeviceName\":\"marky\",\"DeviceSystemName\":\"Android\",\"DeviceSystemVersion\":\"28\",\"Languages\":\"ru\",\"WiFiMacAddress\":\"02:00:00:00:00:00\",\"WiFiNetworksData\":{\"BBSID\":\"02:00:00:00:00:00\",\"SignalStrength\":\"-47\",\"Channel\":\"null\"},\"CellTowerId\":\"-1\",\"LocationAreaCode\":\"-1\",\"ScreenSize\":\"1080x2060\",\"RSA_ApplicationKey\":\"2C501591EA5BF79F1C0ABA8B628C2571\",\"MCC\":\"286\",\"MNC\":\"02\",\"OS_ID\":\"1f32651b72df5515\",\"SDK_VERSION\":\"3.10.0\",\"Compromised\":0,\"Emulator\":0}"
+                    "mobileSDKKAV" to "{\"osVersion\":0,\"KavSdkId\":\"\",\"KavSdkVersion\":\"\",\"KavSdkVirusDBVersion\":\"SdkVirusDbInfo(year=0, month=0, day=0, hour=0, minute=0, second=0, knownThreatsCount=0, records=0, size=0)\",\"KavSdkVirusDBStatus\":\"\",\"KavSdkVirusDBStatusDate\":\"\",\"KavSdkRoot\":false,\"LowPasswordQuality\":false,\"NonMarketAppsAllowed\":false,\"UsbDebugOn\":false,\"ScanStatus\":\"NONE\"}"
                 }
             }
         }
         val rs = httpPost.body()!!.string()
-        return parseInit(rs)
+        return parseLoginData(rs)
     }
 
-
-    private fun generateSecret(): String {
-        val magic = """MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAbXpvs01mentr7E18klXI2mGqkGwO+ew9
-                Xnj8SDsssPfzRxr1YCBdFjf7Zmspcq3/H/x/1xHPIYkiHveZZ3HzkwrAMgx06+Nld6tFN1FJYui9
-                ZKnhk4iB1FItuREiY6A0j4XFf85q+JG+GDdKjDx9LbrafPLGJX73eHAfVjudZTuFLS10jNiFtQJg
-                ywe19v7KwVN7WLQNDuYo8LQLnmcdnSJhVPr/herRuTXwyyUim82dSNfSekZsLat0iHny7I7Er/Uq
-                EX/AaiM+X2ilP9LgHXlsYUK26zjfvO6uLa0dAs8H/DlVx/npotByNzjhtOXUkcEdy2i9glPSjnvC
-                dsyWtQIDAQBC"""
-        return magic
+    fun postCSALogin(loginData: LoginData): String {
+        val httpPost = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/postCSALogin.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                    "SWJSESSIONID" to swJsessionId
+                }
+            }
+            body {
+                form {
+                    "token" to loginData.token
+                    "appName" to "��������"
+                    "appBuildOSType" to "android"
+                    "appVersion" to "10.2.0"
+                    "appBuildType" to "RELEASE"
+                    "appFormat" to "STANDALONE"
+                    "deviceName" to "HUAWEI_ANE-LX1"
+                    "deviceType" to "ANE-LX1"
+                    "deviceOSType" to "android"
+                    "deviceOSVersion" to "9"
+                }
+            }
+        }
+        val rs = httpPost.body()!!.string()
+        return rs
     }
 
-    internal fun parseInit(rs:String):VUid{
-        return VUid(findByXpath("response/VUID",rs))
-    }
 
     internal fun parseRegisterResponse(response: String): MGuid {
 
-        return MGuid(findByXpath(  "response/confirmRegistrationStage",response))
+        return MGuid(findByXpath("response/confirmRegistrationStage", response))
     }
-    internal fun parseConfirmRs(rs:String):Boolean{
-        return findByXpath("response/status/code",rs)=="0"
+
+    internal fun parseConfirmRs(rs: String): Boolean {
+        return findByXpath("response/status/code", rs) == "0"
     }
-    internal fun parseCreatePinRs(rs:String):LoginData{
+
+    internal fun parseLoginData(rs: String): LoginData {
         val host = findByXpath("response/loginData/host", rs)
-        val token =findByXpath("response/loginData/token",rs)
-        val externalToken =findByXpath("response/loginData/externalToken",rs)
+        val token = findByXpath("response/loginData/token", rs)
+        val externalToken = findByXpath("response/loginData/externalToken", rs)
         return LoginData(
                 host = host,
                 token = token,
@@ -148,18 +194,17 @@ class Sberbank {
         )
     }
 
-    private fun findByXpath(xpath:String,xml:String):String{
+    private fun findByXpath(xpath: String, xml: String): String {
         val dbFactory = DocumentBuilderFactory.newInstance()
         val dBuilder = dbFactory.newDocumentBuilder()
         val doc = dBuilder.parse(InputSource(StringReader(xml)))
         val xPath = xpFactory.newXPath()
-       return xPath.evaluate(xpath, doc)
+        return xPath.evaluate(xpath, doc)
                 .replace("\n", "")
                 .replace(" ", "")
 
     }
 
     data class MGuid(val value: String)
-    data class LoginData(val host:String, val token:String,val externalToken:String)
-    data class VUid(val value:String)
+    data class LoginData(val host: String, val token: String, val externalToken: String)
 }
