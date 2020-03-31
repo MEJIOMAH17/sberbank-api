@@ -10,6 +10,7 @@
 
     <properties>
         <kotlin.version>1.3.71</kotlin.version>
+        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <dependencies>
