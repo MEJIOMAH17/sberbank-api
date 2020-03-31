@@ -12,16 +12,15 @@ class SberbankLogining {
 
     /**
      * @param mGuid - [MGuid] from [SberbankRegistration.register]
-     * @param  pin - must be equal to used in [SberbankRegistration.register] method
      * @return [Sberbank] instance
      */
-    fun login(mGuid: MGuid, pin: Pin = defaultPin): Sberbank {
-        val loginRs = privateLogin(mGuid, pin)
+    fun login(mGuid: MGuid): Sberbank {
+        val loginRs = privateLogin(mGuid, defaultPin)
         val jsessionId = postCSALogin(Helper.findByXpath("response/loginData/token", loginRs))
         return Sberbank(jsessionId)
     }
 
-    private fun privateLogin(mGuid: MGuid, pin: Pin): String {
+    private fun privateLogin(mGuid: MGuid, pin: String): String {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
@@ -36,7 +35,7 @@ class SberbankLogining {
             body {
                 form {
                     "operation" to "button.login"
-                    "password" to pin.value
+                    "password" to pin
                     "version" to "9.20"
                     "appType" to "android"
                     "appVersion" to "10.2.0"

@@ -8,7 +8,7 @@ internal class SberbankTest {
     @Test
     fun getProducts() {
         println("login:")
-        val mGuid = SberbankRegistration().register(readLine()!!, Helper.defaultPin) {
+        val mGuid = SberbankRegistration().register(readLine()!!) {
             println("smsPassword:")
             readLine()!!
         }

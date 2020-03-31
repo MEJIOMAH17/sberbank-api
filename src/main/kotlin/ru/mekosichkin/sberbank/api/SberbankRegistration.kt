@@ -17,10 +17,10 @@ class SberbankRegistration {
      * @param pin new pin code of app
      * @param smsPasswordSupplier this function should return registration sms from sberbank
      */
-    fun register(login: String, pin: Pin = defaultPin, smsPasswordSupplier: () -> String): MGuid {
+    fun register(login: String, smsPasswordSupplier: () -> String): MGuid {
         val mGuid = register(login)
         confirm(mGuid, smsPasswordSupplier.invoke())
-        createPin(mGuid, pin)
+        createPin(mGuid, defaultPin)
         return mGuid
     }
 
@@ -89,7 +89,7 @@ class SberbankRegistration {
     /**
      * password - 5 numbers
      */
-    private fun createPin(mGuid: MGuid, pin: Pin = defaultPin) {
+    private fun createPin(mGuid: MGuid, pin: String) {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
@@ -105,7 +105,7 @@ class SberbankRegistration {
                 form {
                     "operation" to "createPIN"
                     "mGUID" to mGuid.value
-                    "password" to pin.value
+                    "password" to pin
                     "version" to "9.20"
                     "appType" to "android"
                     "appVersion" to "10.2.0"
@@ -117,7 +117,7 @@ class SberbankRegistration {
                 }
             }
         }
-        val rs = httpPost.body()!!.string()
+        httpPost.body()!!.string()
     }
 
     private fun parseRegisterResponse(response: String): MGuid {
