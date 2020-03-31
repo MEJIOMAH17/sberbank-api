@@ -8,10 +8,13 @@ import javax.xml.xpath.XPathFactory
 
 
 class Sberbank {
+    companion object {
+        val defaultPin = Pin("42424")
+    }
+
     private val xpFactory = XPathFactory.newInstance()
     private val jsessionid = "0000uHrFvcD0Xv3qIYW5bXDS_Jy:1akk7tu3m|rsDPJSESSIONID=PBC5YS:-152294547"
     private var secondJsessionid = ""
-
     private val swJsessionId = "8f0961c07d8ff7ca1a881002df39ec2f"
 
     fun register(login: String): MGuid {
@@ -79,7 +82,7 @@ class Sberbank {
     /**
      * password - 5 numbers
      */
-    fun createPin(mGuid: MGuid, password: String = "84523"): LoginData {
+    fun createPin(mGuid: MGuid, pin: Pin = defaultPin) {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
@@ -95,7 +98,7 @@ class Sberbank {
                 form {
                     "operation" to "createPIN"
                     "mGUID" to mGuid.value
-                    "password" to password
+                    "password" to pin.value
                     "version" to "9.20"
                     "appType" to "android"
                     "appVersion" to "10.2.0"
@@ -108,10 +111,10 @@ class Sberbank {
             }
         }
         val rs = httpPost.body()!!.string()
-        return parseLoginData(rs)
+        postCSALogin(parseLoginData(rs))
     }
 
-    fun login(mGuid: MGuid): LoginData {
+    fun login(mGuid: MGuid, pin: Pin = defaultPin) {
         val httpPost = httpPost {
             scheme = "https"
             host = "online.sberbank.ru"
@@ -126,7 +129,7 @@ class Sberbank {
             body {
                 form {
                     "operation" to "button.login"
-                    "password" to "84523"
+                    "password" to pin.value
                     "version" to "9.20"
                     "appType" to "android"
                     "appVersion" to "10.2.0"
@@ -142,13 +145,42 @@ class Sberbank {
             }
         }
         val rs = httpPost.body()!!.string()
-        return parseLoginData(rs)
+        postCSALogin(parseLoginData(rs))
+    }
+
+
+    fun productList(): String {
+
+        val httpPost = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/products/list.do"
+            header {
+                cookie {
+                    "JSESSIONID" to secondJsessionid
+                }
+                "Cookie" to "JSESSIONID=$jsessionid"
+                "User-Agent" to "Mobile Device"
+                "Accept-Encoding" to "gzip"
+                "Content-Type" to "application/x-www-form-urlencoded"
+                "Host" to "node2.online.sberbank.ru:4477"
+                "Connection" to "Keep-Alive"
+            }
+            body {
+                form {
+                    "showProductType" to "cards,accounts,imaccounts,loans"
+                }
+            }
+
+        }
+        return httpPost.body()!!.string()
     }
 
     /**
      * This method must be invoked after login for updating jsessionId
      */
-    fun postCSALogin(loginData: LoginData) {
+    private fun postCSALogin(loginData: LoginData) {
         val httpPost = httpPost {
             scheme = "https"
             host = "node2.online.sberbank.ru"
@@ -183,34 +215,6 @@ class Sberbank {
 
     }
 
-    fun productList(): String {
-
-        val httpPost = httpPost {
-            scheme = "https"
-            host = "node2.online.sberbank.ru"
-            port = 4477
-            path = "/mobile9/private/products/list.do"
-            header {
-                cookie {
-                    "JSESSIONID" to secondJsessionid
-                }
-                "Cookie" to "JSESSIONID=$jsessionid"
-                "User-Agent" to "Mobile Device"
-                "Accept-Encoding" to "gzip"
-                "Content-Type" to "application/x-www-form-urlencoded"
-                "Host" to "node2.online.sberbank.ru:4477"
-                "Connection" to "Keep-Alive"
-            }
-            body {
-                form {
-                    "showProductType" to "cards,accounts,imaccounts,loans"
-                }
-            }
-
-        }
-        return httpPost.body()!!.string()
-    }
-
 
     internal fun parseRegisterResponse(response: String): MGuid {
 
@@ -243,6 +247,12 @@ class Sberbank {
 
     }
 
+    internal data class LoginData(val host: String, val token: String, val externalToken: String)
     data class MGuid(val value: String)
-    data class LoginData(val host: String, val token: String, val externalToken: String)
+    data class Pin(val value: String) {
+        init {
+            require(value.length == 5)
+            require(value.all { it.isDigit() })
+        }
+    }
 }

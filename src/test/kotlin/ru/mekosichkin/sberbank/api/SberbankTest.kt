@@ -9,15 +9,17 @@ internal class SberbankTest {
     @Test
     fun getProducts() {
         println("login:")
-        val register = sberbank.register(readLine()!!)
+        val mGuid = sberbank.register(readLine()!!)
         println("smsPassword:")
         val sms = readLine()!!
-        sberbank.confirm(register, sms)
-        val loginData = sberbank.createPin(register)
-        val postCSALogin = sberbank.postCSALogin(loginData)
-        val getProducts = sberbank.productList()
-        print(getProducts)
+        sberbank.confirm(mGuid, sms)
+        sberbank.createPin(mGuid)
+        var getProducts = sberbank.productList()
+        sberbank.login(mGuid)
+        getProducts = sberbank.productList()
+
     }
+
 
 
     @Test
