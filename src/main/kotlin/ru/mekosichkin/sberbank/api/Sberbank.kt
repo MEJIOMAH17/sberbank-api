@@ -6,16 +6,20 @@ import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathFactory
 
-
+/**
+ *
+ */
 class Sberbank {
     companion object {
         val defaultPin = Pin("42424")
     }
 
+    //<editor-fold desc="Interior">
     private val xpFactory = XPathFactory.newInstance()
     private val jsessionid = "0000uHrFvcD0Xv3qIYW5bXDS_Jy:1akk7tu3m|rsDPJSESSIONID=PBC5YS:-152294547"
     private var secondJsessionid = ""
     private val swJsessionId = "8f0961c07d8ff7ca1a881002df39ec2f"
+    //</editor-fold>
 
     fun register(login: String): MGuid {
         val httpPost = httpPost {
@@ -148,8 +152,10 @@ class Sberbank {
         postCSALogin(parseLoginData(rs))
     }
 
-
-    fun productList(): String {
+    /**
+     * @return raw xml with product list of current account
+     */
+    fun productListRaw(): String {
 
         val httpPost = httpPost {
             scheme = "https"
@@ -175,6 +181,26 @@ class Sberbank {
 
         }
         return httpPost.body()!!.string()
+    }
+
+    //<editor-fold desc="Private footer">
+    private fun parseRegisterResponse(response: String): MGuid {
+        return MGuid(findByXpath("response/confirmRegistrationStage", response))
+    }
+
+    private fun parseConfirmRs(rs: String): Boolean {
+        return findByXpath("response/status/code", rs) == "0"
+    }
+
+    private fun findByXpath(xpath: String, xml: String): String {
+        val dbFactory = DocumentBuilderFactory.newInstance()
+        val dBuilder = dbFactory.newDocumentBuilder()
+        val doc = dBuilder.parse(InputSource(StringReader(xml)))
+        val xPath = xpFactory.newXPath()
+        return xPath.evaluate(xpath, doc)
+                .replace("\n", "")
+                .replace(" ", "")
+
     }
 
     /**
@@ -215,17 +241,7 @@ class Sberbank {
 
     }
 
-
-    internal fun parseRegisterResponse(response: String): MGuid {
-
-        return MGuid(findByXpath("response/confirmRegistrationStage", response))
-    }
-
-    internal fun parseConfirmRs(rs: String): Boolean {
-        return findByXpath("response/status/code", rs) == "0"
-    }
-
-    internal fun parseLoginData(rs: String): LoginData {
+    private fun parseLoginData(rs: String): LoginData {
         val host = findByXpath("response/loginData/host", rs)
         val token = findByXpath("response/loginData/token", rs)
         val externalToken = findByXpath("response/loginData/externalToken", rs)
@@ -236,23 +252,7 @@ class Sberbank {
         )
     }
 
-    private fun findByXpath(xpath: String, xml: String): String {
-        val dbFactory = DocumentBuilderFactory.newInstance()
-        val dBuilder = dbFactory.newDocumentBuilder()
-        val doc = dBuilder.parse(InputSource(StringReader(xml)))
-        val xPath = xpFactory.newXPath()
-        return xPath.evaluate(xpath, doc)
-                .replace("\n", "")
-                .replace(" ", "")
+    private class LoginData(val host: String, val token: String, val externalToken: String)
+    //</editor-fold>
 
-    }
-
-    internal data class LoginData(val host: String, val token: String, val externalToken: String)
-    data class MGuid(val value: String)
-    data class Pin(val value: String) {
-        init {
-            require(value.length == 5)
-            require(value.all { it.isDigit() })
-        }
-    }
 }

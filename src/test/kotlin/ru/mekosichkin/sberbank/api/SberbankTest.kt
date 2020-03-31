@@ -14,9 +14,9 @@ internal class SberbankTest {
         val sms = readLine()!!
         sberbank.confirm(mGuid, sms)
         sberbank.createPin(mGuid)
-        var getProducts = sberbank.productList()
+        var getProducts = sberbank.productListRaw()
         sberbank.login(mGuid)
-        getProducts = sberbank.productList()
+        getProducts = sberbank.productListRaw()
 
     }
 
@@ -33,15 +33,6 @@ internal class SberbankTest {
         assert(sberbank.parseConfirmRs(successConfirmRs))
     }
 
-    @Test
-    fun parseCreatePinRs() {
-        val loginData = sberbank.parseLoginData(createPinRs)
-        loginData.run {
-            assert(host == "node2.online.sberbank.ru")
-            assert(token == "a791e6007a2a5506cd495e947829b7fa")
-            assert(externalToken == "060d0500060406535752545a02015a5155030702050300005606520601030453")
-        }
-    }
 
 
     val registerRs = """<?xml version="1.0" encoding="windows-1251" ?>
