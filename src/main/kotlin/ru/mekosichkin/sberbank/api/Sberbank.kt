@@ -1,12 +1,22 @@
 package ru.mekosichkin.sberbank.api
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import io.github.rybalkinsd.kohttp.dsl.httpPost
+import ru.mekosichkin.sberbank.api.products.list.Response
 
 /**
  * API to Sberbank
  * Use [SberbankLogining.login] to get instance of this class
  */
 class Sberbank internal constructor(private val jsessionid: String) {
+    var xmlMapper = XmlMapper()
+
+    /**
+     * Get product list as [Response]
+     */
+    fun productList(): Response {
+        return xmlMapper.readValue(productListRaw(), Response::class.java)
+    }
 
     /**
      * @return raw xml with product list of current account
