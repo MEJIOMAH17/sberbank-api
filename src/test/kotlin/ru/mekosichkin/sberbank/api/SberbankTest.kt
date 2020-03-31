@@ -1,28 +1,56 @@
 package ru.mekosichkin.sberbank.api
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import org.junit.Test
-import ru.mekosichkin.sberbank.api.products.list.Response
+import ru.mekosichkin.sberbank.api.payments.list.Operation
 import java.io.File
+import java.time.LocalDate
 
 
 internal class SberbankTest {
 
     @Test
-    fun getProducts() {
+    fun register() {
         println("login:")
         val mGuid = SberbankRegistration().register(readLine()!!) {
             println("smsPassword:")
             readLine()!!
         }
-        val sberbank = SberbankLogining().login(mGuid)
+        print(mGuid)
+    }
+
+    @Test
+    fun getProducts() {
+        val sberbank = createSberbank()
         var getProducts = sberbank.productList()
         print(getProducts)
     }
+
+
     @Test
-    fun test(){
-        val xml=File("/home/mark/.IntelliJIdea2019.3/config/scratches/scratch_5.xml").readText()
-        XmlMapper().readValue(xml, Response::class.java)
+    fun getPayments() {
+        val sberbank = createSberbank()
+        val products = sberbank.productList()
+        val result = ArrayList<Operation>()
+        for (card in products.cards!!.list!!) {
+            val elements = sberbank.paymentsList(
+                    card,
+                    LocalDate.now().minusYears(5),
+                    LocalDate.now(),
+                    Short.MAX_VALUE.toInt(),
+                    0
+            ).operations
+            if(elements!=null){
+                result.addAll(elements)
+            }
+        }
+        print(result)
+    }
+
+
+    private fun createSberbank(): Sberbank {
+        val mguid = MGuid(File("/home/mark/Projects/sberbank-api/mguid").readText())
+        val sberbank = SberbankLogining().login(mguid)
+        return sberbank
     }
 
 }
