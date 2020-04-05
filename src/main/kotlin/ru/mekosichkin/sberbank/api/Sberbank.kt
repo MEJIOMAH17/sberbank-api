@@ -218,7 +218,7 @@ class Sberbank internal constructor(private val jsessionid: String) {
         }
         val firstBody = first.body()!!.string()
         var transactionToken = Helper.findByXpath("response/transactionToken", firstBody)
-        val documentNumber = Helper.findByXpath("response/initialData/documentNumber/integerType/value",firstBody)
+        val documentNumber = Helper.findByXpath("response/initialData/documentNumber/integerType/value", firstBody)
         val second = httpPost {
             scheme = "https"
             host = "node2.online.sberbank.ru"
@@ -276,6 +276,96 @@ class Sberbank internal constructor(private val jsessionid: String) {
 
         }
         return confirm.body()!!.string()
+    }
+
+    /**
+     * @param phoneNumber номер телефона в формате 9001234567
+     */
+    fun externalPayment(from: ProductFullId,
+                        phoneNumber: String,
+                        amount: Int): String {
+        val first = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/payment.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "form" to "RurPayment"
+                    "operation" to "init"
+                    "isPublicKeyRequired" to "false"
+                    "isFromAddrBook" to "true"
+                }
+            }
+        }
+        val firstBody = first.body()!!.string()
+        var transactionToken = Helper.findByXpath("response/transactionToken", firstBody)
+        val documentNumber = Helper.findByXpath("response/initialData/documentNumber/integerType/value", firstBody)
+        val second = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/payment.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "operation" to "save"
+                    "form" to "RurPayment"
+                    "transactionToken" to transactionToken
+                    "documentDate" to LocalDate.now().format(Helper.DDMMYYYY)
+                    "documentNumber" to documentNumber
+                    "isPlannedPaymentDateSelected" to "true"
+                    "fromResource" to from.value
+                    "externalPhoneNumber" to phoneNumber
+                    "receiverSubType" to "ourPhone"
+                    "sellAmount" to amount
+                    "isFromAddrBook"	to "true"
+                    "exactAmount"	to "charge-off-field-exact"
+                }
+            }
+        }
+        val redirectUrl = second.networkResponse()!!.request().url()
+        val preConfirm = httpGet {
+            url(redirectUrl.url())
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+        }.body()!!.string()
+        val id = Helper.findByXpath("response/document/id", preConfirm)
+        transactionToken = Helper.findByXpath("response/transactionToken", preConfirm)
+        val confirm = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/confirm.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "transactionToken" to transactionToken
+                    "id" to id
+                    "operation" to "confirm"
+                    mobileSdk()
+                }
+            }
+
+        }
+        return confirm.body()!!.string()
+
     }
 
 }

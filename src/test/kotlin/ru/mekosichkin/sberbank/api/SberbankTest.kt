@@ -68,6 +68,17 @@ internal class SberbankTest {
         print(xx)
     }
 
+    @Test
+    fun externalPayment(){
+      val sberbank = createSberbank()
+        val products = sberbank.productList()
+        val xx = sberbank.externalPayment(
+                products.cards!!.list!!.first { !it.isBlocked }.productFullId,
+                "9150019486",
+                1
+        )
+    }
+
 
     private fun createSberbank(): Sberbank {
         val mguid = MGuid(File("/home/mark/Projects/sberbank-api/mguid").readText())
