@@ -30,7 +30,7 @@ class Card {
         @JvmName("setIsAllowedPriorityP2P") set
 
     val productFullId: ProductFullId
-        get() = ProductFullId("card:${id}")
+        get() = ProductFullId(type = "card", id = id!!)
     val isBlocked: Boolean
         get() = state == "blocked"
 }

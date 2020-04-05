@@ -47,13 +47,24 @@ internal class SberbankTest {
     }
 
     @Test
-    fun payment() {
+    fun internalPayment() {
         val sberbank = createSberbank()
         val products = sberbank.productList()
         val xx = sberbank.internalPayment(
                 from = products.accounts!!.list!!.first { it.balance!!.amount!! > 0 }.productFullId,
                 to = products.cards!!.list!!.first { !it.isBlocked }.productFullId,
-                buyAmount = 1)
+                amount = 1)
+        print(xx)
+    }
+
+    @Test
+    fun loanPayment(){
+        val sberbank = createSberbank()
+        val products = sberbank.productList()
+        val xx = sberbank.loanPayment(
+                from = products.cards!!.list!!.first { !it.isBlocked }.productFullId,
+                to = products.loans!!.list!!.first().productFullId,
+                amount = 1)
         print(xx)
     }
 

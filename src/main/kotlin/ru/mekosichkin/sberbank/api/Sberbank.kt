@@ -112,11 +112,11 @@ class Sberbank internal constructor(private val jsessionid: String) {
      * Перевод между своими счетами. (вклады/карты)
      * @param from откуда перевести деньги
      *@param to куда перевести деньги
-     *@param buyAmount  сумма в рублях
+     *@param amount  сумма в рублях
      */
     fun internalPayment(from: ProductFullId,
                         to: ProductFullId,
-                        buyAmount: Int): String {
+                        amount: Int): String {
         val first = httpPost {
             scheme = "https"
             host = "node2.online.sberbank.ru"
@@ -151,7 +151,7 @@ class Sberbank internal constructor(private val jsessionid: String) {
                     "fromResource" to from.value
                     "toResource" to to.value
                     "transactionToken" to transactionToken
-                    "buyAmount" to buyAmount
+                    "buyAmount" to amount
                     "form" to "InternalPayment"
                     "exactAmount" to "destination-field-exact"
                     "operation" to "save"
@@ -184,6 +184,90 @@ class Sberbank internal constructor(private val jsessionid: String) {
                 form {
                     "transactionToken" to transactionToken
                     "form" to "InternalPayment"
+                    "id" to id
+                    "operation" to "confirm"
+                    mobileSdk()
+                }
+            }
+
+        }
+        return confirm.body()!!.string()
+    }
+
+    fun loanPayment(from: ProductFullId,
+                    to: ProductFullId,
+                    amount: Int): String {
+        val first = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/payment.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "form" to "EarlyLoanRepaymentClaim"
+                    "loanLinkId" to to.id
+                    "operation" to "init"
+                    "partial" to "true"
+                }
+            }
+        }
+        val firstBody = first.body()!!.string()
+        var transactionToken = Helper.findByXpath("response/transactionToken", firstBody)
+        val documentNumber = Helper.findByXpath("response/initialData/documentNumber/integerType/value",firstBody)
+        val second = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/payment.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "documentDate" to LocalDate.now().format(Helper.DDMMYYYY)
+                    "transactionToken" to transactionToken
+                    "isPlannedPaymentDateSelected" to "true"
+                    "amount" to amount
+                    "form" to "EarlyLoanRepaymentClaim"
+                    "documentNumber" to documentNumber
+                    "loanLinkId" to to.id
+                    "fromResource" to from.value
+                    "operation" to "save"
+                    "partial" to "true"
+                }
+            }
+        }
+        val redirectUrl = second.networkResponse()!!.request().url()
+        val preConfirm = httpGet {
+            url(redirectUrl.url())
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+        }.body()!!.string()
+        val id = Helper.findByXpath("response/document/id", preConfirm)
+        transactionToken = Helper.findByXpath("response/transactionToken", preConfirm)
+        val confirm = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/confirm.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "transactionToken" to transactionToken
                     "id" to id
                     "operation" to "confirm"
                     mobileSdk()

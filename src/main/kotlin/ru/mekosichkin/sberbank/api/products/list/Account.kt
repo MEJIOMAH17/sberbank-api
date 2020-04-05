@@ -16,5 +16,5 @@ class Account {
     var id: String? = null
     var state: String? = null
     val productFullId: ProductFullId
-        get() = ProductFullId("account:${id}")
+        get() = ProductFullId(type = "account", id = id!!)
 }
