@@ -50,7 +50,7 @@ internal class SberbankTest {
     fun payment() {
         val sberbank = createSberbank()
         val products = sberbank.productList()
-        val xx = sberbank.payment(
+        val xx = sberbank.internalPayment(
                 from = products.accounts!!.list!!.first { it.balance!!.amount!! > 0 }.productFullId,
                 to = products.cards!!.list!!.first { !it.isBlocked }.productFullId,
                 buyAmount = 1)

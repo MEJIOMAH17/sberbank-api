@@ -114,9 +114,9 @@ class Sberbank internal constructor(private val jsessionid: String) {
      *@param to куда перевести деньги
      *@param buyAmount  сумма в рублях
      */
-    fun payment(from: ProductFullId,
-                to: ProductFullId,
-                buyAmount: Int): String {
+    fun internalPayment(from: ProductFullId,
+                        to: ProductFullId,
+                        buyAmount: Int): String {
         val first = httpPost {
             scheme = "https"
             host = "node2.online.sberbank.ru"
