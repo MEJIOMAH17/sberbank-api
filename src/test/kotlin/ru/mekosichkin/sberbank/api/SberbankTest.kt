@@ -72,11 +72,13 @@ internal class SberbankTest {
     fun externalPayment(){
       val sberbank = createSberbank()
         val products = sberbank.productList()
+        print("Номер телефона в формате 9001234567")
         val xx = sberbank.externalPayment(
                 products.cards!!.list!!.first { !it.isBlocked }.productFullId,
-                "9150019486",
+                readLine()!!,
                 1
         )
+        print(xx)
     }
 
 
