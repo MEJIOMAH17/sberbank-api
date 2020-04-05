@@ -39,11 +39,22 @@ internal class SberbankTest {
                     Short.MAX_VALUE.toInt(),
                     0
             ).operations
-            if(elements!=null){
+            if (elements != null) {
                 result.addAll(elements)
             }
         }
         print(result)
+    }
+
+    @Test
+    fun payment() {
+        val sberbank = createSberbank()
+        val products = sberbank.productList()
+        val xx = sberbank.payment(
+                from = products.accounts!!.list!!.first { it.balance!!.amount!! > 0 }.productFullId,
+                to = products.cards!!.list!!.first { !it.isBlocked }.productFullId,
+                buyAmount = 1)
+        print(xx)
     }
 
 

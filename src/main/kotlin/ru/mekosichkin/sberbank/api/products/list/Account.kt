@@ -1,5 +1,7 @@
 package ru.mekosichkin.sberbank.api.products.list
 
+import ru.mekosichkin.sberbank.api.ProductFullId
+
 class Account {
     var closeDate: String? = null
     var availcash: Availcash? = null
@@ -13,4 +15,6 @@ class Account {
     var showarrestdetail: String? = null
     var id: String? = null
     var state: String? = null
+    val productFullId: ProductFullId
+        get() = ProductFullId("account:${id}")
 }

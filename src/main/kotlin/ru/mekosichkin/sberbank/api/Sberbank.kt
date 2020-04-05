@@ -1,7 +1,10 @@
 package ru.mekosichkin.sberbank.api
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import io.github.rybalkinsd.kohttp.dsl.httpGet
 import io.github.rybalkinsd.kohttp.dsl.httpPost
+import io.github.rybalkinsd.kohttp.ext.url
+import ru.mekosichkin.sberbank.api.Helper.mobileSdk
 import ru.mekosichkin.sberbank.api.products.list.Card
 import java.time.LocalDate
 import ru.mekosichkin.sberbank.api.payments.list.Response as PaymentListResponse
@@ -64,7 +67,7 @@ class Sberbank internal constructor(private val jsessionid: String) {
                 to = to.format(Helper.DDMMYYYY),
                 paginationSize = paginationSize,
                 paginationOffset = paginationOffset)
-            return xmlMapper.readValue(paymentsListRaw,PaymentListResponse::class.java)
+        return xmlMapper.readValue(paymentsListRaw, PaymentListResponse::class.java)
     }
 
     /**
@@ -103,6 +106,92 @@ class Sberbank internal constructor(private val jsessionid: String) {
 
         }
         return httpPost.body()!!.string()
+    }
+
+    /**
+     * Перевод между своими счетами. (вклады/карты)
+     * @param from откуда перевести деньги
+     *@param to куда перевести деньги
+     *@param buyAmount  сумма в рублях
+     */
+    fun payment(from: ProductFullId,
+                to: ProductFullId,
+                buyAmount: Int): String {
+        val first = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/payment.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "form" to "InternalPayment"
+                    "operation" to "init"
+                }
+            }
+
+        }
+        var transactionToken = Helper.findByXpath("response/transactionToken", first.body()!!.string())
+        val second = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/payment.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "fromResource" to from.value
+                    "toResource" to to.value
+                    "transactionToken" to transactionToken
+                    "buyAmount" to buyAmount
+                    "form" to "InternalPayment"
+                    "exactAmount" to "destination-field-exact"
+                    "operation" to "save"
+                }
+            }
+
+        }
+        val redirectUrl = second.networkResponse()!!.request().url()
+        val preConfirm = httpGet {
+            url(redirectUrl.url())
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+        }.body()!!.string()
+        val id = Helper.findByXpath("response/document/id", preConfirm)
+        transactionToken = Helper.findByXpath("response/transactionToken", preConfirm)
+        val confirm = httpPost {
+            scheme = "https"
+            host = "node2.online.sberbank.ru"
+            port = 4477
+            path = "/mobile9/private/payments/confirm.do"
+            header {
+                cookie {
+                    "JSESSIONID" to jsessionid
+                }
+            }
+            body {
+                form {
+                    "transactionToken" to transactionToken
+                    "form" to "InternalPayment"
+                    "id" to id
+                    "operation" to "confirm"
+                    mobileSdk()
+                }
+            }
+
+        }
+        return confirm.body()!!.string()
     }
 
 }
