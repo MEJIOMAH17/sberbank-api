@@ -1,7 +1,11 @@
 plugins {
+    kotlin("jvm") version "1.4.10"
     id("maven-publish")
     java
 }
+
+val githubToken: String by project
+val githubUser: String by project
 
 repositories {
     jcenter()
@@ -12,6 +16,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.71")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.8")
     testImplementation("junit:junit:4.13.1")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
 }
 
 group = "ru.mekosichkin"
@@ -28,7 +33,7 @@ publishing{
         maven {
             url = uri("https://maven.pkg.github.com/MEJIOMAH17/sberbank-api")
             credentials {
-                username = "MEJIOMAH17"
+                username = githubUser
                 password = githubToken
             }
         }
