@@ -11,9 +11,9 @@ internal class SberbankTest {
     @Test
     fun register() {
         println("login:")
-        val mGuid = SberbankRegistration().register(readLine()!!) {
+        val mGuid = SberbankRegistration().register(System.getenv("login")) {
             println("smsPassword:")
-            readLine()!!
+            System.getenv("password")
         }
         print(mGuid)
     }
