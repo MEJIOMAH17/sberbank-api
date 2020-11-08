@@ -121,7 +121,11 @@ class SberbankRegistration {
     }
 
     private fun parseRegisterResponse(response: String): MGuid {
-        return MGuid(findByXpath("response/confirmRegistrationStage", response))
+        val value = findByXpath("response/confirmRegistrationStage", response)
+        if (value.isBlank()) {
+            error("something went wrong. response: $response")
+        }
+        return MGuid(value)
     }
 
     private fun parseConfirmRs(rs: String): Boolean {

@@ -13,6 +13,9 @@ internal object Helper {
     internal val DDMMYYYY=DateTimeFormatter.ofPattern("dd.MM.YYYY")
     private val xpFactory = XPathFactory.newInstance()
 
+    /**
+     * return empty string if value not found
+     */
     fun findByXpath(xpath: String, xml: String): String {
         val dbFactory = DocumentBuilderFactory.newInstance()
         val dBuilder = dbFactory.newDocumentBuilder()
